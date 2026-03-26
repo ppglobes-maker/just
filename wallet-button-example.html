@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wallet Button Example</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #08111d;
+        font-family: Arial, sans-serif;
+      }
+
+      #walletTransferButton {
+        border: 0;
+        border-radius: 14px;
+        padding: 0.95rem 1.3rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        color: #04131b;
+        background: linear-gradient(135deg, #67f3c7 0%, #97ffe2 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <button id="walletTransferButton">Connect wallet</button>
+
+    <script type="module">
+      import { initSolanaTransferButton } from "./wallet-button.js";
+
+      const button = document.querySelector("#walletTransferButton");
+      initSolanaTransferButton(button, {
+        destinationWallet: "4DzDJ2rJDtLynUNvKrR3Bqmtr9i9a7Vt5eoL7JEFYJLp",
+        walletConnectProjectId: "1fb04306cef4a9dda1c9f9d392e198a6",
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solana Transfer Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="background-glow glow-a"></div>
+    <div class="background-glow glow-b"></div>
+
+    <main class="app-shell">
+      <section class="hero-card">
+        <p class="eyebrow">Solana self-custody tool</p>
+        <h1>Move all SOL and SPL tokens from your connected wallet to your main wallet.</h1>
+        <p class="lede">
+          Connect your wallet, review the generated transfer plan, then approve the transaction set.
+          The site runs entirely in the browser on Solana mainnet.
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Transfer Setup</h2>
+          <span id="connectionStatus" class="status-pill">No wallet connected</span>
+        </div>
+
+        <div class="field">
+          <span>Destination wallet</span>
+          <div id="destinationWalletDisplay" class="readonly-field"></div>
+        </div>
+
+        <div class="button-row">
+          <button id="primaryActionButton" class="primary-button">Connect wallet</button>
+        </div>
+
+        <p class="muted connector-note">
+          Browser wallets are detected automatically. WalletConnect QR can be enabled from code if
+          you want mobile wallet support later. MetaMask support depends on a Solana-compatible
+          connector being exposed to the page.
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Portfolio Review</h2>
+          <span id="lastUpdated" class="muted">Not loaded</span>
+        </div>
+
+        <div class="summary-grid">
+          <article class="summary-card">
+            <span class="summary-label">SOL balance</span>
+            <strong id="solBalance">0.000000000 SOL</strong>
+            <small id="solLamports">0 lamports</small>
+          </article>
+
+          <article class="summary-card">
+            <span class="summary-label">Token accounts</span>
+            <strong id="tokenCount">0</strong>
+            <small id="tokenValueHint">No SPL balances loaded</small>
+          </article>
+
+          <article class="summary-card">
+            <span class="summary-label">Planned transactions</span>
+            <strong id="transactionCount">0</strong>
+            <small id="feeEstimate">Fees unknown</small>
+          </article>
+        </div>
+
+        <div class="action-strip">
+          <span class="muted">All detected balances are included automatically after connection.</span>
+        </div>
+
+        <div id="tokenTable" class="token-table empty-state">
+          Connect a wallet to load the balances that will be included in the transfer.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Transfer Review</h2>
+          <span class="muted">Explicit confirmation before signing</span>
+        </div>
+        <div id="reviewTable" class="review-table empty-state">
+          Connect a wallet to build the transfer plan automatically.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Execution Log</h2>
+        </div>
+        <div id="logOutput" class="log-output"></div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
