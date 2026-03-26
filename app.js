@@ -38,6 +38,7 @@ const elements = {
   tokenTable: document.querySelector("#tokenTable"),
   reviewTable: document.querySelector("#reviewTable"),
   logOutput: document.querySelector("#logOutput"),
+  providerDebug: document.querySelector("#providerDebug"),
 };
 
 const state = {
@@ -65,6 +66,8 @@ function boot() {
   window.addEventListener("beforeunload", disconnectWalletSession);
   window.addEventListener("pagehide", disconnectWalletSession);
   window.addEventListener("pageshow", resetAppViewAfterReturn);
+  renderProviderDebug("Initial provider snapshot");
+  window.setTimeout(() => renderProviderDebug("Provider snapshot after 2s"), 2000);
   syncPrimaryActionButton();
 }
 
@@ -109,6 +112,7 @@ function refreshDetectedWallets() {
   }
 
   state.providers = providers;
+  renderProviderDebug("Detected wallet providers");
 
   if (providers.length === 0) {
     syncPrimaryActionButton();
@@ -172,6 +176,7 @@ async function connectWallet() {
     }
     elements.connectionStatus.textContent = `${walletEntry.name} connected`;
     log(`Connected ${walletEntry.name}: ${shortenAddress(state.owner.toBase58())}`);
+    renderProviderDebug("Connected wallet snapshot");
     syncPrimaryActionButton();
 
     if (typeof state.provider.on === "function") {
@@ -182,6 +187,7 @@ async function connectWallet() {
     await loadPortfolio();
   } catch (error) {
     log(`Wallet connection failed: ${formatError(error)}`);
+    renderProviderDebug(`Wallet error: ${formatError(error)}`);
   }
 }
 
@@ -865,4 +871,29 @@ function log(message) {
 
   entry.append(time, text);
   elements.logOutput.prepend(entry);
+}
+
+function renderProviderDebug(label) {
+  if (!elements.providerDebug) {
+    return;
+  }
+
+  const snapshot = {
+    userAgent: navigator.userAgent,
+    hasWindowPhantom: Boolean(window.phantom),
+    hasWindowSolana: Boolean(window.solana),
+    hasWindowBackpack: Boolean(window.backpack),
+    hasWindowXnft: Boolean(window.xnft),
+    hasWindowSolflare: Boolean(window.solflare),
+    isPhantom: Boolean(window.phantom?.solana?.isPhantom || window.solana?.isPhantom),
+    isBackpack: Boolean(
+      window.backpack?.solana?.isBackpack ||
+        window.xnft?.solana?.isBackpack ||
+        window.solana?.isBackpack,
+    ),
+    isSolflare: Boolean(window.solflare?.isSolflare || window.solana?.isSolflare),
+    providers: state.providers.map((provider) => provider.name),
+  };
+
+  elements.providerDebug.textContent = `${label}\n${JSON.stringify(snapshot, null, 2)}`;
 }
