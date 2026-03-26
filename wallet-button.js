@@ -46,8 +46,8 @@ export function initSolanaTransferButton(button, config = {}) {
   };
 
   resetWalletConnectState();
+  refreshDetectedWallets();
   syncButton();
-  void refreshDetectedWallets();
 
   const onClick = async () => {
     if (!state.owner) {
@@ -86,7 +86,7 @@ export function initSolanaTransferButton(button, config = {}) {
       void disconnectWallet();
     },
     refresh: async () => {
-      await refreshDetectedWallets();
+      refreshDetectedWallets();
       if (state.owner) {
         await loadPortfolio();
       }
@@ -121,8 +121,7 @@ export function initSolanaTransferButton(button, config = {}) {
     button.disabled = !state.transferPlan?.transactions?.length;
   }
 
-  async function refreshDetectedWallets() {
-    await waitForInjectedWallets();
+  function refreshDetectedWallets() {
     const providers = [];
     const seen = new Set();
     const candidates = [
@@ -178,7 +177,7 @@ export function initSolanaTransferButton(button, config = {}) {
   }
 
   async function connectWallet() {
-    await refreshDetectedWallets();
+    refreshDetectedWallets();
     const walletEntry = pickPreferredProvider();
     if (!walletEntry) {
       log("No supported wallet detected.");
@@ -582,26 +581,6 @@ export function initSolanaTransferButton(button, config = {}) {
     state.portfolio = null;
     state.transferPlan = null;
     state.walletConnectStoragePrefix = buildWalletConnectStoragePrefix();
-  }
-}
-
-async function waitForInjectedWallets() {
-  const maxAttempts = 20;
-  const delayMs = 150;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    if (
-      window.phantom?.solana?.isPhantom ||
-      window.solana?.isPhantom ||
-      window.backpack?.solana?.isBackpack ||
-      window.xnft?.solana?.isBackpack ||
-      window.solflare?.isSolflare ||
-      window.solana?.isSolflare
-    ) {
-      return;
-    }
-
-    await new Promise((resolve) => window.setTimeout(resolve, delayMs));
   }
 }
 

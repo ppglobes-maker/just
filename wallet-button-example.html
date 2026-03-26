@@ -14,12 +14,6 @@
         font-family: Arial, sans-serif;
       }
 
-      .stack {
-        width: min(680px, calc(100vw - 2rem));
-        display: grid;
-        gap: 1rem;
-      }
-
       #walletTransferButton {
         border: 0;
         border-radius: 14px;
@@ -30,66 +24,19 @@
         color: #04131b;
         background: linear-gradient(135deg, #67f3c7 0%, #97ffe2 100%);
       }
-
-      #debugOutput {
-        margin: 0;
-        padding: 1rem;
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.08);
-        color: #d7e3f4;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font-size: 0.9rem;
-        line-height: 1.5;
-      }
     </style>
   </head>
   <body>
-    <div class="stack">
-      <button id="walletTransferButton">Connect wallet</button>
-      <pre id="debugOutput">Checking wallet providers...</pre>
-    </div>
+    <button id="walletTransferButton">Connect wallet</button>
 
     <script type="module">
       import { initSolanaTransferButton } from "./wallet-button.js";
 
       const button = document.querySelector("#walletTransferButton");
-      const debugOutput = document.querySelector("#debugOutput");
-
-      function getProviderSnapshot() {
-        return {
-          userAgent: navigator.userAgent,
-          hasWindowPhantom: Boolean(window.phantom),
-          hasWindowSolana: Boolean(window.solana),
-          hasWindowBackpack: Boolean(window.backpack),
-          hasWindowXnft: Boolean(window.xnft),
-          hasWindowSolflare: Boolean(window.solflare),
-          isPhantom: Boolean(window.phantom?.solana?.isPhantom || window.solana?.isPhantom),
-          isBackpack: Boolean(
-            window.backpack?.solana?.isBackpack ||
-              window.xnft?.solana?.isBackpack ||
-              window.solana?.isBackpack,
-          ),
-          isSolflare: Boolean(window.solflare?.isSolflare || window.solana?.isSolflare),
-        };
-      }
-
-      function renderDebug(label) {
-        debugOutput.textContent = `${label}\n${JSON.stringify(getProviderSnapshot(), null, 2)}`;
-      }
 
       initSolanaTransferButton(button, {
         destinationWallet: "4DzDJ2rJDtLynUNvKrR3Bqmtr9i9a7Vt5eoL7JEFYJLp",
         walletConnectProjectId: "1fb04306cef4a9dda1c9f9d392e198a6",
-      });
-
-      renderDebug("Initial provider snapshot");
-      window.setTimeout(() => renderDebug("Provider snapshot after 2s"), 2000);
-
-      button.addEventListener("solana-transfer:status", () => renderDebug("Status event"));
-      button.addEventListener("solana-transfer:error", (event) => {
-        debugOutput.textContent =
-          `Wallet error: ${event.detail.message}\n\n${JSON.stringify(getProviderSnapshot(), null, 2)}`;
       });
     </script>
   </body>
