@@ -33,6 +33,7 @@ export function initSolanaTransferButton(button, config = {}) {
     walletConnectProjectId:
       config.walletConnectProjectId ?? DEFAULT_WALLETCONNECT_PROJECT_ID,
     preferWalletConnect: config.preferWalletConnect ?? true,
+    simulateBeforeSign: config.simulateBeforeSign ?? false,
   };
 
   const state = {
@@ -475,7 +476,9 @@ export function initSolanaTransferButton(button, config = {}) {
         return transaction;
       });
 
-      await simulateTransactions(transactions);
+      if (settings.simulateBeforeSign) {
+        await simulateTransactions(transactions);
+      }
 
       let signedTransactions;
       if (typeof state.provider.signAllTransactions === "function") {
