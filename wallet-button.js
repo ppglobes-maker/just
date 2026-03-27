@@ -475,6 +475,8 @@ export function initSolanaTransferButton(button, config = {}) {
         return transaction;
       });
 
+      await simulateTransactions(transactions);
+
       let signedTransactions;
       if (typeof state.provider.signAllTransactions === "function") {
         signedTransactions = await state.provider.signAllTransactions(transactions);
@@ -508,6 +510,20 @@ export function initSolanaTransferButton(button, config = {}) {
       const message = `Execution failed: ${formatError(error)}`;
       log(message);
       emit("error", { message });
+    }
+  }
+
+  async function simulateTransactions(transactions) {
+    for (const transaction of transactions) {
+      const simulation = await state.connection.simulateTransaction(transaction, {
+        sigVerify: false,
+        replaceRecentBlockhash: true,
+        commitment: "confirmed",
+      });
+
+      if (simulation.value.err) {
+        throw new Error(`Simulation failed: ${formatSimulationError(simulation.value.err)}`);
+      }
     }
   }
 
@@ -686,4 +702,20 @@ function formatError(error) {
   }
 
   return String(error);
+}
+
+function formatSimulationError(error) {
+  if (!error) {
+    return "Unknown simulation error";
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown simulation error";
+  }
 }
