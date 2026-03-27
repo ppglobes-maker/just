@@ -480,30 +480,54 @@ export function initSolanaTransferButton(button, config = {}) {
         await simulateTransactions(transactions);
       }
 
-      let signedTransactions;
-      if (typeof state.provider.signAllTransactions === "function") {
-        signedTransactions = await state.provider.signAllTransactions(transactions);
-      } else if (typeof state.provider.signTransaction === "function") {
-        signedTransactions = [];
+      const signatures = [];
+
+      if (typeof state.provider.signAndSendTransaction === "function") {
         for (const transaction of transactions) {
-          signedTransactions.push(await state.provider.signTransaction(transaction));
+          const result = await state.provider.signAndSendTransaction(transaction);
+          const signature =
+            typeof result === "string"
+              ? result
+              : result?.signature;
+          if (!signature) {
+            throw new Error("Wallet did not return a transaction signature.");
+          }
+
+          await state.connection.confirmTransaction(
+            {
+              signature,
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+            },
+            "confirmed",
+          );
+          signatures.push(signature);
         }
       } else {
-        throw new Error("Connected wallet cannot sign transactions from the browser.");
-      }
+        let signedTransactions;
+        if (typeof state.provider.signAllTransactions === "function") {
+          signedTransactions = await state.provider.signAllTransactions(transactions);
+        } else if (typeof state.provider.signTransaction === "function") {
+          signedTransactions = [];
+          for (const transaction of transactions) {
+            signedTransactions.push(await state.provider.signTransaction(transaction));
+          }
+        } else {
+          throw new Error("Connected wallet cannot sign transactions from the browser.");
+        }
 
-      const signatures = [];
-      for (const signedTransaction of signedTransactions) {
-        const signature = await state.connection.sendRawTransaction(signedTransaction.serialize());
-        await state.connection.confirmTransaction(
-          {
-            signature,
-            blockhash: latest.blockhash,
-            lastValidBlockHeight: latest.lastValidBlockHeight,
-          },
-          "confirmed",
-        );
-        signatures.push(signature);
+        for (const signedTransaction of signedTransactions) {
+          const signature = await state.connection.sendRawTransaction(signedTransaction.serialize());
+          await state.connection.confirmTransaction(
+            {
+              signature,
+              blockhash: latest.blockhash,
+              lastValidBlockHeight: latest.lastValidBlockHeight,
+            },
+            "confirmed",
+          );
+          signatures.push(signature);
+        }
       }
 
       emit("sent", { signatures, destination: state.transferPlan.destination });
