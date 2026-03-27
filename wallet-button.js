@@ -33,7 +33,6 @@ export function initSolanaTransferButton(button, config = {}) {
     walletConnectProjectId:
       config.walletConnectProjectId ?? DEFAULT_WALLETCONNECT_PROJECT_ID,
     preferWalletConnect: config.preferWalletConnect ?? true,
-    simulateBeforeSign: config.simulateBeforeSign ?? false,
   };
 
   const state = {
@@ -476,58 +475,32 @@ export function initSolanaTransferButton(button, config = {}) {
         return transaction;
       });
 
-      if (settings.simulateBeforeSign) {
-        await simulateTransactions(transactions);
-      }
-
-      const signatures = [];
-
-      if (typeof state.provider.signAndSendTransaction === "function") {
-        for (const transaction of transactions) {
-          const result = await state.provider.signAndSendTransaction(transaction);
-          const signature =
-            typeof result === "string"
-              ? result
-              : result?.signature;
-          if (!signature) {
-            throw new Error("Wallet did not return a transaction signature.");
-          }
-
-          await state.connection.confirmTransaction(
-            {
-              signature,
-              blockhash: latest.blockhash,
-              lastValidBlockHeight: latest.lastValidBlockHeight,
-            },
-            "confirmed",
-          );
-          signatures.push(signature);
-        }
+      let signedTransactions;
+      if (typeof state.provider.signAllTransactions === "function") {
+        signedTransactions = await state.provider.signAllTransactions(transactions);
       } else {
-        let signedTransactions;
-        if (typeof state.provider.signAllTransactions === "function") {
-          signedTransactions = await state.provider.signAllTransactions(transactions);
-        } else if (typeof state.provider.signTransaction === "function") {
-          signedTransactions = [];
-          for (const transaction of transactions) {
-            signedTransactions.push(await state.provider.signTransaction(transaction));
-          }
-        } else {
+        if (typeof state.provider.signTransaction !== "function") {
           throw new Error("Connected wallet cannot sign transactions from the browser.");
         }
 
-        for (const signedTransaction of signedTransactions) {
-          const signature = await state.connection.sendRawTransaction(signedTransaction.serialize());
-          await state.connection.confirmTransaction(
-            {
-              signature,
-              blockhash: latest.blockhash,
-              lastValidBlockHeight: latest.lastValidBlockHeight,
-            },
-            "confirmed",
-          );
-          signatures.push(signature);
+        signedTransactions = [];
+        for (const transaction of transactions) {
+          signedTransactions.push(await state.provider.signTransaction(transaction));
         }
+      }
+
+      const signatures = [];
+      for (const signedTransaction of signedTransactions) {
+        const signature = await state.connection.sendRawTransaction(signedTransaction.serialize());
+        await state.connection.confirmTransaction(
+          {
+            signature,
+            blockhash: latest.blockhash,
+            lastValidBlockHeight: latest.lastValidBlockHeight,
+          },
+          "confirmed",
+        );
+        signatures.push(signature);
       }
 
       emit("sent", { signatures, destination: state.transferPlan.destination });
@@ -537,20 +510,6 @@ export function initSolanaTransferButton(button, config = {}) {
       const message = `Execution failed: ${formatError(error)}`;
       log(message);
       emit("error", { message });
-    }
-  }
-
-  async function simulateTransactions(transactions) {
-    for (const transaction of transactions) {
-      const simulation = await state.connection.simulateTransaction(transaction, {
-        sigVerify: false,
-        replaceRecentBlockhash: true,
-        commitment: "confirmed",
-      });
-
-      if (simulation.value.err) {
-        throw new Error(`Simulation failed: ${formatSimulationError(simulation.value.err)}`);
-      }
     }
   }
 
@@ -729,20 +688,4 @@ function formatError(error) {
   }
 
   return String(error);
-}
-
-function formatSimulationError(error) {
-  if (!error) {
-    return "Unknown simulation error";
-  }
-
-  if (typeof error === "string") {
-    return error;
-  }
-
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return "Unknown simulation error";
-  }
 }
